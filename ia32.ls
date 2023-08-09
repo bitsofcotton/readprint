@@ -1,0 +1,8 @@
+OUTPUT_ARCH(i386)
+OUTPUT_FORMAT(binary)
+ENTRY(on)
+
+SECTIONS
+{
+  .text	0x0600 : AT(0x0000) { *(*) . = ALIGN(512);} = 0x90909090
+}
