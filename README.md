@@ -1,5 +1,5 @@
 # readprint
-Read and print first sector low layer user possible but with firmware.
+Read and print first sector as early stage as user possible but with firmware.
 
 # Description
 Read and print storage first sector on possible early user's boot process with first firmware the hardware have.
