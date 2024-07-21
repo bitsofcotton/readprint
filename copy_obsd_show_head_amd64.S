@@ -555,7 +555,8 @@ do_lba:
 	call	Lchr
 
 	/* Load LBA sector number from active partition table entry */
-	movl	8(%si), %ecx
+	xorl	%ecx, %ecx
+lba_retry:
 	movl	%ecx, lba_sector
 
 	pushw	%si			/* We'll need %si later */
@@ -565,6 +566,14 @@ do_lba:
 	int	$0x13
 
 	popw	%si			/* get back %si */
+
+	pushw	$1
+	call	we_dump
+	addw	$2, %sp
+	
+	incl	%ecx
+	cmpl	CNT_SECT, %ecx
+	jl	lba_retry
 
 	/* Dump and loop here. (XXX not implemented.) */
 	jnc	stay_stopped		/* Done dump, halt */
@@ -597,11 +606,19 @@ do_chs:
 	call	Lchr
 
 	/* Load values from active partition table entry */
-	movb	1(%si), %dh		/* head */
-	movw	2(%si), %cx		/* sect, cyl */
+	xorb	%dh, %dh		/* head */
+	xorw	%cx, %cx		/* sect, cyl */
+chs_retry:
 	movw	$0x201, %ax		/* function and number of blocks */
 	xorw	%bx, %bx		/* put it at %es:0 */
 	int	$0x13
+	
+	pushw	$0
+	call we_dump
+	addw	$2, %sp
+	incw	%cx
+	cmpw	$CNT_SECT, %cx
+	jl	chs_retry
 	
 	/* dump and loop here (XXX not implemented and it's only to ease.) */
 	jnc	stay_stopped
@@ -614,6 +631,33 @@ stay_stopped:
 	hlt
 	/* Just to make sure */
 	jmp	stay_stopped
+
+we_dump:
+	pushw %si
+	pushw %si
+	puts(crlf)
+	popw %si
+	pushl %ecx
+	movl $0x200, %ecx
+	testl $0, 0x8(%esp)
+	jz loop_dump_es
+loop_dump_ds:
+	movb %ds:(%si), %al
+	call hex_byte /* %al */
+	dec %ecx
+	inc %si
+	jz ensure_dump
+	jmp loop_dump_ds
+loop_dump_es:
+	movb %es:(%si), %al
+	call hex_byte /* %al */
+	dec %ecx
+	inc %si
+	jnz loop_dump_es
+ensure_dump:
+	popl %ecx
+	popw %si
+	ret
 
 /*
  * Display string
@@ -668,7 +712,7 @@ hex_byte:
 /* Write out nibble in %al */
 hex_nibble:
         and     $0x0F, %al
-        add     $'0', %all
+        add     $'0', %al
         jbe     Lchr
         addb    $'A'-'9'-1, %al
         /* fall thru to Lchr */
@@ -709,6 +753,8 @@ info:	.ascii		"Using drive "
 drive_num:
 	.byte		'X'
 	.byte		0
+part_num:
+	.asciz		"Y"
 
 /* Error messages */
 efdmbr:	.asciz		"MBR on floppy or old BIOS\r\n"
@@ -722,12 +768,8 @@ endofcode:
 	. = 0x1b8
 	.space  4, 0
 
-/* partition table */
-/* flag, head, sec, cyl, type, ehead, esect, ecyl, start, len */
-	. = DOSPARTOFF	/* starting address of partition table */
-pt:	.fill	0x40,1,0
 /* the last 2 bytes in the sector 0 contain the signature */
 	. = 0x1fe
 signature:
-	.short	DOSMBR_SIGNATURE
+	.short 0xaa55
 	. = 0x200
