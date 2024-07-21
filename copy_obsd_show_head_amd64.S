@@ -572,7 +572,7 @@ lba_retry:
 	addw	$2, %sp
 	
 	incl	%ecx
-	cmpl	CNT_SECT, %ecx
+	cmpl	$CNT_SECT, %ecx
 	jl	lba_retry
 
 	/* Dump and loop here. (XXX not implemented.) */
@@ -634,12 +634,13 @@ stay_stopped:
 
 we_dump:
 	pushw %si
+	pushw %ax
 	pushw %si
 	puts(crlf)
 	popw %si
 	pushl %ecx
 	movl $0x200, %ecx
-	testl $0, 0x8(%esp)
+	testw $0xffff, 0xc(%esp)
 	jz loop_dump_es
 loop_dump_ds:
 	movb %ds:(%si), %al
@@ -656,6 +657,7 @@ loop_dump_es:
 	jnz loop_dump_es
 ensure_dump:
 	popl %ecx
+	popw %ax
 	popw %si
 	ret
 
