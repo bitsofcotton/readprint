@@ -568,9 +568,11 @@ lba_retry:
 
 	popw	%si			/* get back %si */
 
-	pushw	$1
+	pushw	%dx
+	xorw	%dx, %dx
+	incw	%dx
 	call	we_dump
-	addw	$2, %sp
+	popw	%dx
 	
 	incw	%cx
 	cmpw	$CNT_SECT, %cx
@@ -614,9 +616,10 @@ chs_retry:
 	
 	pushw	%si
 	xorw	%si, %si
-	pushw	$0
+	pushw	%dx
+	xorw	%dx, %dx
 	call we_dump
-	addw	$2, %sp
+	popw	%dx
 	popw	%si
 	incw	%cx
 	cmpw	$CNT_SECT, %cx
@@ -639,20 +642,20 @@ we_dump:
 	popw %si
 	pushw %cx
 	movw $0x200, %cx
-	testw $0xffff, 0xc(%esp)
+	testw %dx, %dx
 	jz loop_dump_es
 loop_dump_ds:
 	movb %ds:(%si), %al
 	call hex_byte /* %al */
 	inc %si
-	dec %ecx
+	dec %cx
 	jz ensure_dump
 	jmp loop_dump_ds
 loop_dump_es:
 	movb %es:(%si), %al
 	call hex_byte /* %al */
 	inc %si
-	dec %ecx
+	dec %cx
 	jnz loop_dump_es
 ensure_dump:
 	popw %cx
