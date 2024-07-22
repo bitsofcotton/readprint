@@ -564,6 +564,7 @@ lba_retry:
 	movb	$0x42, %ah
 	movw	$lba_command, %si
 	int	$0x13
+	jc	stay_stopped		/* Done dump, halt */
 
 	popw	%si			/* get back %si */
 
@@ -573,10 +574,7 @@ lba_retry:
 	
 	incl	%ecx
 	cmpl	$CNT_SECT, %ecx
-	jl	lba_retry
-
-	/* Dump and loop here. (XXX not implemented.) */
-	jnc	stay_stopped		/* Done dump, halt */
+	jne	lba_retry
 
 	/*
 	 * LBA read failed, fall through to try CHS read
@@ -612,16 +610,17 @@ chs_retry:
 	movw	$0x201, %ax		/* function and number of blocks */
 	xorw	%bx, %bx		/* put it at %es:0 */
 	int	$0x13
+	jc	stay_stopped
 	
+	pushw	%si
+	xorw	%si, %si
 	pushw	$0
 	call we_dump
 	addw	$2, %sp
+	popw	%si
 	incw	%cx
 	cmpw	$CNT_SECT, %cx
-	jl	chs_retry
-	
-	/* dump and loop here (XXX not implemented and it's only to ease.) */
-	jnc	stay_stopped
+	jne	chs_retry
 
 read_error:
 	puts(eread)
@@ -645,15 +644,15 @@ we_dump:
 loop_dump_ds:
 	movb %ds:(%si), %al
 	call hex_byte /* %al */
-	dec %ecx
 	inc %si
+	dec %ecx
 	jz ensure_dump
 	jmp loop_dump_ds
 loop_dump_es:
 	movb %es:(%si), %al
 	call hex_byte /* %al */
-	dec %ecx
 	inc %si
+	dec %ecx
 	jnz loop_dump_es
 ensure_dump:
 	popl %ecx
