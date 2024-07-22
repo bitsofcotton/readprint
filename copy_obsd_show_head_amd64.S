@@ -555,9 +555,9 @@ do_lba:
 	call	Lchr
 
 	/* Load LBA sector number from active partition table entry */
-	xorl	%ecx, %ecx
+	xorw	%cx, %cx
 lba_retry:
-	movl	%ecx, lba_sector
+	movw	%cx, lba_sector
 
 	pushw	%si			/* We'll need %si later */
 
@@ -572,8 +572,8 @@ lba_retry:
 	call	we_dump
 	addw	$2, %sp
 	
-	incl	%ecx
-	cmpl	$CNT_SECT, %ecx
+	incw	%cx
+	cmpw	$CNT_SECT, %cx
 	jne	lba_retry
 
 	/*
@@ -637,8 +637,8 @@ we_dump:
 	pushw %si
 	puts(crlf)
 	popw %si
-	pushl %ecx
-	movl $0x200, %ecx
+	pushw %cx
+	movw $0x200, %cx
 	testw $0xffff, 0xc(%esp)
 	jz loop_dump_es
 loop_dump_ds:
@@ -655,7 +655,7 @@ loop_dump_es:
 	dec %ecx
 	jnz loop_dump_es
 ensure_dump:
-	popl %ecx
+	popw %cx
 	popw %ax
 	popw %si
 	ret
