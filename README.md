@@ -9,3 +9,8 @@ However, this is only to ease ourself not to be inserted some of the code.
 So if the firmware is infected, we cannot check them at all.
 
 To use this with effective, it is recommended to write entity to after second sector, and check them by cross-platform and write first sector as only read/jump second sector. However, ever in this case, the data can be cheated by firmware if they're completely infected.
+
+# Compatibility
+We need to refer ongoing reliable source codes by some communities.
+Or we get incomplete binary to work with some known computers which we don't have.
+
